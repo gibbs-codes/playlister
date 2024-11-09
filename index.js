@@ -26,10 +26,3 @@ app.get('/run-monthly-venue', async (req, res) => {
     res.status(500).json({ message: 'Error executing getMonthlyVenueSongKick', error: error.message });
   }
 });
-
-const port = process.env.PORT
-
-app.listen(port, async () => {
-  console.log('its tune time');
-  await open(`http://localhost:${port}/login`);
-});
