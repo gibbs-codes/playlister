@@ -1,28 +1,28 @@
-import express from 'express';
-import open from 'open';
 import dotenv from 'dotenv';
-import spotifyAuth from './auth/spotifyAuth.js';
-import { tokenMiddleware } from './auth/tokenMiddleware.js';
 import getMonthlyVenueSongKick from './venueScraping/songKickVenueScraper.js';
-import createPlaylist from './spotifyLogic/createPlaylist.js';
+import { refreshAccessToken } from './auth/spotifyAuth.js';
 
 dotenv.config();
 
-const app = express();
-
-app.use('/', spotifyAuth);
-
-// Example route that requires the access token
-app.get('/protected', tokenMiddleware, (req, res) => {
-  res.send(`Access token is: ${req.accessToken}`);
-});
-
-app.get('/run-monthly-venue', async (req, res) => {
+export const handler = async (event) => {
   try {
+    // Refresh the access token
+    const accessToken = await refreshAccessToken();
+    console.log('Access token refreshed:', accessToken);
+
+    // Run the getMonthlyVenueSongKick function
     const result = await getMonthlyVenueSongKick();
-    res.status(200).json({ message: 'getMonthlyVenueSongKick executed successfully', result });
+    console.log('getMonthlyVenueSongKick executed successfully:', result);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'getMonthlyVenueSongKick executed successfully', result }),
+    };
   } catch (error) {
     console.error('Error executing getMonthlyVenueSongKick:', error);
-    res.status(500).json({ message: 'Error executing getMonthlyVenueSongKick', error: error.message });
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Error executing getMonthlyVenueSongKick', error: error.message }),
+    };
   }
-});
+};
