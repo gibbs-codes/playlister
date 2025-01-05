@@ -4,7 +4,6 @@ const showObj = {
       artists: [],
       playlist: '',
       shows: [],
-      songs: [],
       songs: []
     }, 
     '3386364-chop-shop': {

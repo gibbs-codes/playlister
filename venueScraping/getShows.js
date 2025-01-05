@@ -18,21 +18,25 @@ async function getShows(venue) {
         const readableTime = datetime ? new Date(datetime).toLocaleString() : null;
         return { text, href, datetime, readableTime };
       });
+      console.log(textsAndHrefs)
       return textsAndHrefs;
     });
   
     await browser.close();
   
     const filteredResults = results.filter(({ href }) => href !== null);
-    showObj[venue].shows = filteredResults.map(({ text, href, readableTime }) => ( `${text} - ${readableTime} tickets:${href}`));
-  
-    const splitResults = filteredResults.flatMap(({ text, href, datetime, readableTime }) => 
+
+    let shows = filteredResults.map(({ text, href, datetime, readableTime }) => ({songKick: venue, venueName: venue, concertDate: datetime, concertTime: readableTime, linkToBuyTickets: href}));
+    
+    const artists = filteredResults.flatMap(({ text, href, datetime, readableTime }) => 
       text.split(',').map(entry => ({ text: entry.trim(), href, datetime, readableTime }))
     );
-    showObj[venue].artists = splitResults;
-  
-    console.log(`Artists at ${venue}`, showObj[venue].artists);
-    return splitResults;
+
+    showObj[venue].artists = artists;
+
+    let venue = {songKick: venue, venueName: venue, artistsComing: artists, lastScraped: new Date()};
+    
+    // need to do 2 things here: put the venue, and add the shows
 }
 
 export default getShows;

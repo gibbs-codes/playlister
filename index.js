@@ -1,21 +1,13 @@
 import express from 'express';
 import open from 'open';
 import dotenv from 'dotenv';
-import spotifyAuth from './auth/spotifyAuth.js';
-import { tokenMiddleware } from './auth/tokenMiddleware.js';
+import bodyParser from 'body-parser';
 import getMonthlyVenueSongKick from './venueScraping/songKickVenueScraper.js';
-import createPlaylist from './spotifyLogic/createPlaylist.js';
 
 dotenv.config();
 
 const app = express();
-
-app.use('/', spotifyAuth);
-
-// Example route that requires the access token
-app.get('/protected', tokenMiddleware, (req, res) => {
-  res.send(`Access token is: ${req.accessToken}`);
-});
+app.use(bodyParser.json());
 
 app.get('/run-monthly-venue', async (req, res) => {
   try {
@@ -27,7 +19,7 @@ app.get('/run-monthly-venue', async (req, res) => {
   }
 });
 
-const port = process.env.PORT
+const port = process.env.PORT || 3002;
 
 app.listen(port, async () => {
   console.log('its tune time');
