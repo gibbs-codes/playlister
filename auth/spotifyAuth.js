@@ -11,17 +11,6 @@ const client_secret = process.env.SECRET;
 const redirect_uri = process.env.REDIRECT_URI;
 const scopes = process.env.SCOPES;
 
-router.get('/login', (req, res) => {
-  console.log(client_id)
-  const authUrl = 'https://accounts.spotify.com/authorize?' + querystring.stringify({
-    response_type: 'code',
-    client_id: client_id,
-    scope: scopes,
-    redirect_uri: redirect_uri
-  });
-  console.log(res.data)
-  res.redirect(authUrl);
-});
 
 router.get('/callback', async (req, res) => {
   const code = req.query.code || null;

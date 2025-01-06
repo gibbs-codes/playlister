@@ -1,35 +1,31 @@
 import express from 'express';
-import open from 'open';
 import dotenv from 'dotenv';
+import login from './auth/login.js';
+import bigRouter from './routes/bigRoute.js';
+import playlistRouter from './routes/playlistRoutes.js';
 import spotifyAuth from './auth/spotifyAuth.js';
-import { tokenMiddleware } from './auth/tokenMiddleware.js';
-import getMonthlyVenueSongKick from './venueScraping/songKickVenueScraper.js';
-import createPlaylist from './spotifyLogic/createPlaylist.js';
+import { getAccessToken, setAccessToken } from './auth/tokenStore.js';
+
 
 dotenv.config();
 
 const app = express();
+let token = getAccessToken();
+if (!token) {
+  login();
+}
 
+app.use(express.json());
 app.use('/', spotifyAuth);
-
-// Example route that requires the access token
-app.get('/protected', tokenMiddleware, (req, res) => {
-  res.send(`Access token is: ${req.accessToken}`);
+app.use('/callback', async (req, res) => {
+   console.log(req.params)
+  res.status(200).json({ message: 'callback' });
 });
-
-app.get('/run-monthly-venue', async (req, res) => {
-  try {
-    const result = await getMonthlyVenueSongKick();
-    res.status(200).json({ message: 'getMonthlyVenueSongKick executed successfully', result });
-  } catch (error) {
-    console.error('Error executing getMonthlyVenueSongKick:', error);
-    res.status(500).json({ message: 'Error executing getMonthlyVenueSongKick', error: error.message });
-  }
-});
+app.use('/api/doit', bigRouter);
+app.use('/api/playlist', playlistRouter);
 
 const port = process.env.PORT
 
 app.listen(port, async () => {
-  console.log('its tune time');
-  await open(`http://localhost:${port}/login`);
+  console.log('its tune time at port', port);
 });
