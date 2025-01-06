@@ -1,13 +1,16 @@
 import showObj from './showObj.js';
 import getShows from './getShows.js';
+import Venue from '../models/venueModel.js';
 
 
 async function getMonthlyVenueSongKick() {
-  let venues = Object.keys(showObj);
-  for (const venue of venues) {
+  const venues = await Venue.find();
+  const songKickList = venues.map((venue) => venue._id); 
+  for (const venue of songKickList) {
     console.log(venue, 'artists!');
     await getShows(venue);
   }
+  return 'we did it joe'
 }
 
 export default getMonthlyVenueSongKick;

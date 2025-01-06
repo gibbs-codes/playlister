@@ -1,5 +1,25 @@
 import puppeteer from 'puppeteer';
 import showObj from './showObj.js';
+import Show from '../models/showModel.js';
+import Venue from '../models/venueModel.js';
+
+
+const createMultipleShows = async (showsToAdd) => {
+  try {
+    const shows = [];
+    for (let showDetails of showsToAdd) {
+      console.log(showDetails)
+      const singleShow = new Show(showDetails);
+      await singleShow.save();
+      shows.push(singleShow);
+    }
+    console.log(`${shows.length} shows successfully created.`);
+    return shows;
+  } catch (err) {
+    console.log("Error creating users:", err);
+    return [];
+  }
+};
 
 async function getShows(venue) {
     const url = `https://www.songkick.com/venues/${venue}/calendar`;
@@ -26,17 +46,17 @@ async function getShows(venue) {
   
     const filteredResults = results.filter(({ href }) => href !== null);
 
-    let shows = filteredResults.map(({ text, href, datetime, readableTime }) => ({songKick: venue, venueName: venue, concertDate: datetime, concertTime: readableTime, linkToBuyTickets: href}));
-    
-    const artists = filteredResults.flatMap(({ text, href, datetime, readableTime }) => 
-      text.split(',').map(entry => ({ text: entry.trim(), href, datetime, readableTime }))
-    );
+    let shows = filteredResults.map(({ text, href, datetime, readableTime }) => ({ venue: venue, artist: text, concertDate: datetime, concertTime: readableTime, linkToBuyTickets: href}));
+    await createMultipleShows(shows);
+    let artistsToAdd = filteredResults.map(({ text, href, datetime, readableTime }) => (text));
 
-    showObj[venue].artists = artists;
+    console.log(artistsToAdd)
+    const updatedVenue = await Venue.findByIdAndUpdate(venue, {artistsComing: artistsToAdd, lastScraped: Date.now() }, {new: true})
 
-    let venue = {songKick: venue, venueName: venue, artistsComing: artists, lastScraped: new Date()};
-    
-    // need to do 2 things here: put the venue, and add the shows
 }
+
+
+
+
 
 export default getShows;

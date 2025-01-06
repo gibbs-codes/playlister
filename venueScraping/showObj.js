@@ -1,11 +1,4 @@
 const showObj = {
-    '3756109-sleeping-village': {
-      name: 'Sleeping Village',
-      artists: [],
-      playlist: '',
-      shows: [],
-      songs: []
-    }, 
     '3386364-chop-shop': {
       name: 'Chop Shop',
       artists: [],
@@ -22,13 +15,6 @@ const showObj = {
     }, 
     '4444301-schubas': {
       name: 'Schubas',
-      artists: [],
-      playlist: '',
-      shows: [],
-      songs: []
-    }, 
-    '3756109-sleeping-village': {
-      name: 'Sleeping Village',
       artists: [],
       playlist: '',
       shows: [],
