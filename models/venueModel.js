@@ -5,7 +5,9 @@ const venueSchema = new mongoose.Schema({
   address: String,
   venueName: String,
   website: String,
+  playlistId: String,
   artistsComing: Array,
+  lastPlaylistUpdate: Date,
   lastScraped: { type: Date, default: Date.now },
 });
 

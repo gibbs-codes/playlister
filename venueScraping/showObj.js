@@ -1,4 +1,11 @@
 const showObj = {
+    '3756109-sleeping-village': {
+      "_id": "3756109-sleeping-village",
+      "address": "3734 W. Belmont Ave. Chicago, IL 60618",
+      "venueName": "Sleeping Village",
+      "playlistId": "4UCubkjaZhpanZZ87RFuu9",
+      "website": "https://sleeping-village.com"
+  },
     '3386364-chop-shop': {
       name: 'Chop Shop',
       artists: [],

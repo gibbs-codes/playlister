@@ -9,7 +9,7 @@ async function getMonthlyVenueSongKick() {
     console.log(venue, 'artists!');
     await getShows(venue);
   }
-  return;
+  return true;
 }
 
 export default getMonthlyVenueSongKick;
