@@ -11,8 +11,6 @@ import getMonthlyVenueSongKick from './venueScraping/songKickVenueScraper.js';
 
 dotenv.config();
 
-connectDB();
-
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
@@ -34,4 +32,5 @@ const port = process.env.PORT || 3002;
 
 app.listen(port, async () => {
   console.log('its tune time');
+  await connectDB();
 });

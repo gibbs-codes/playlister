@@ -1,4 +1,3 @@
-import showObj from './showObj.js';
 import getShows from './getShows.js';
 import Venue from '../models/venueModel.js';
 
@@ -10,7 +9,7 @@ async function getMonthlyVenueSongKick() {
     console.log(venue, 'artists!');
     await getShows(venue);
   }
-  return 'we did it joe'
+  return;
 }
 
 export default getMonthlyVenueSongKick;

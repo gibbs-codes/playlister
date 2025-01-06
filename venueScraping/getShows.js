@@ -1,5 +1,4 @@
 import puppeteer from 'puppeteer';
-import showObj from './showObj.js';
 import Show from '../models/showModel.js';
 import Venue from '../models/venueModel.js';
 
@@ -54,9 +53,5 @@ async function getShows(venue) {
     const updatedVenue = await Venue.findByIdAndUpdate(venue, {artistsComing: artistsToAdd, lastScraped: Date.now() }, {new: true})
 
 }
-
-
-
-
 
 export default getShows;
