@@ -1,5 +1,4 @@
 import express from 'express';
-import open from 'open';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -9,6 +8,12 @@ import venueRouter from './routes/venueRoutes.js';
 import showRouter from './routes/showRoutes.js';
 import getMonthlyVenueSongKick from './venueScraping/songKickVenueScraper.js';
 import spotifyBatch from './spotifyLogic/spotifyBatch.js';
+import login from './auth/login.js';
+import bigRouter from './routes/bigRoute.js';
+import playlistRouter from './routes/playlistRoutes.js';
+import spotifyAuth from './auth/spotifyAuth.js';
+import { getAccessToken, setAccessToken } from './auth/tokenStore.js';
+
 
 dotenv.config();
 
@@ -36,7 +41,19 @@ app.use('/makeReport', async (req, res) => {
     console.log('Error executing getMonthlyVenueSongKick:', err)
     res.status(202).json({ message: 'Error executing getMonthlyVenueSongKick', error: err.message });
    }
+let token = getAccessToken();
+if (!token) {
+  login();
+}});
+
+app.use(express.json());
+app.use('/', spotifyAuth);
+app.use('/callback', async (req, res) => {
+   console.log(req.params)
+  res.status(200).json({ message: 'callback' });
 });
+app.use('/api/doit', bigRouter);
+app.use('/api/playlist', playlistRouter);
 
 const port = process.env.PORT || 3002;
 
