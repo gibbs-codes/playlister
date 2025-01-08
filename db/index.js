@@ -3,10 +3,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();  
 
-const dbURI = `mongodb://${process.env.MONGO_HOST}:27017/upcomingShows`;
-
+const dbURI = process.env.MONGO_HOST
 
 const connectDB = async () => {
+  console.log(dbURI);
   try {
     await mongoose.connect(dbURI);
     console.log("Connected to MongoDB");

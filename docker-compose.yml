@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: upcoming
+    ports:
+      - "8888:8888"
+    env_file:
+      - .env

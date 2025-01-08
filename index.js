@@ -9,11 +9,8 @@ import showRouter from './routes/showRoutes.js';
 import getMonthlyVenueSongKick from './venueScraping/songKickVenueScraper.js';
 import spotifyBatch from './spotifyLogic/spotifyBatch.js';
 import login from './auth/login.js';
-import bigRouter from './routes/bigRoute.js';
-import playlistRouter from './routes/playlistRoutes.js';
 import spotifyAuth from './auth/spotifyAuth.js';
-import { getAccessToken, setAccessToken } from './auth/tokenStore.js';
-
+import { getAccessToken } from './auth/tokenStore.js';
 
 dotenv.config();
 
@@ -24,6 +21,7 @@ app.use(morgan('dev'));
 
 app.use('/api/venues', venueRouter);
 app.use('/api/shows', showRouter);
+
 app.use('/makeReport', async (req, res) => {
   try {
     let monthlyRoundUp = await getMonthlyVenueSongKick();
@@ -41,23 +39,14 @@ app.use('/makeReport', async (req, res) => {
     console.log('Error executing getMonthlyVenueSongKick:', err)
     res.status(202).json({ message: 'Error executing getMonthlyVenueSongKick', error: err.message });
    }
-let token = getAccessToken();
-if (!token) {
-  login();
-}});
+});
 
 app.use(express.json());
 app.use('/', spotifyAuth);
-app.use('/callback', async (req, res) => {
-   console.log(req.params)
-  res.status(200).json({ message: 'callback' });
-});
-app.use('/api/doit', bigRouter);
-app.use('/api/playlist', playlistRouter);
 
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 8888;
 
 app.listen(port, async () => {
-  console.log('its tune time');
+  console.log(`its tune time on port ${port}`);
   await connectDB();
 });

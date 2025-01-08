@@ -15,8 +15,8 @@ ENV MONGO_HOST "host.docker.internal"
 # Copy the current directory contents into the container at /app
 COPY . .
 
-# Make port 3002 available to the world outside this container
-EXPOSE 3002
+# Make port 8888 available to the world outside this container
+EXPOSE 8888
 
 # Run the app when the container launches
 CMD ["node", "index.js"]

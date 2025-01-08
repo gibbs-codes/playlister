@@ -1,9 +1,7 @@
 import express from 'express';
-import axios from 'axios';
 import querystring from 'querystring';
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
-import { setAccessToken } from './tokenStore.js';
 
 dotenv.config();
 
@@ -44,23 +42,8 @@ async function login() {
     await browser.close();
     console.log('browser closed!');
 
-    // // Exchange authorization code for access token
-    // const tokenUrl = 'https://accounts.spotify.com/api/token';
-    // const data = querystring.stringify({
-    //   grant_type: 'authorization_code',
-    //   code: code,
-    //   redirect_uri: process.env.REDIRECT_URI,
-    //   client_id: process.env.CLIENT_ID,
-    //   client_secret: process.env.SECRET
-    // });
-    // const headers = {
-    //   'Content-Type': 'application/x-www-form-urlencoded'
-    // };
-
-    // const response = await axios.post(tokenUrl, data, { headers });
-    // const accessToken = response.data.access_token;
-    // setAccessToken(accessToken);
-    // console.log('Access token set:', accessToken);
+    return true;
+    
   } catch (error) {
     console.error('Error during Spotify login:', error);
   }
