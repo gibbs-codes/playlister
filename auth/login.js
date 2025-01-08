@@ -23,7 +23,6 @@ async function login() {
     const page = await browser.newPage();
     await page.goto(authUrl, { waitUntil: 'networkidle2' });
 
-    // Wait for the login form to load and enter credentials
     await page.waitForSelector('#login-username', { timeout: 60000 });
     await page.type('#login-username', process.env.SPOTIFY_USERNAME);
     await page.type('#login-password', process.env.SPOTIFY_PASSWORD);
@@ -31,13 +30,8 @@ async function login() {
 
     console.log('logged in!');
 
-    // Wait for the authorization page to load and click authorize
     await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 });
     console.log('Authorization page URL:', page.url());
-
-    const url = page.url();
-    const code = url.split('callback?code=')[1];
-    console.log('CODE:', code);
 
     await browser.close();
     console.log('browser closed!');

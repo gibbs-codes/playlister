@@ -1,7 +1,6 @@
 let accessToken = null;
 
 export function setAccessToken(token) {
-  console.log('NEW TOKEN!!!!!!!!!!!!!')
   accessToken = token;
 }
 
