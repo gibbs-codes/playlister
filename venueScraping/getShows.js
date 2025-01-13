@@ -25,7 +25,7 @@ async function getShows(venue) {
     const browser = await puppeteer.launch({
       headless: true, // Run in headless mode
       args: ['--no-sandbox', '--disable-setuid-sandbox'], // Disable sandboxing
-      executablePath: '/usr/bin/chromium-browser' // Specify the path to Chromium
+      executablePath: '/usr/bin/chromium', // Specify the path to Chromium
     });
     const page = await browser.newPage();
   
