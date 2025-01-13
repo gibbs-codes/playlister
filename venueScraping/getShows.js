@@ -22,7 +22,11 @@ const createMultipleShows = async (showsToAdd) => {
 
 async function getShows(venue) {
     const url = `https://www.songkick.com/venues/${venue}/calendar`;
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      headless: true, // Run in headless mode
+      args: ['--no-sandbox', '--disable-setuid-sandbox'], // Disable sandboxing
+      executablePath: '/usr/bin/chromium-browser' // Specify the path to Chromium
+    });
     const page = await browser.newPage();
   
     await page.goto(url, { waitUntil: 'networkidle2' });

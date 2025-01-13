@@ -19,7 +19,11 @@ async function login() {
   });
 
   try {
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({
+      headless: true, // Run in headless mode
+      args: ['--no-sandbox', '--disable-setuid-sandbox'], // Disable sandboxing
+      executablePath: '/usr/bin/chromium-browser' // Specify the path to Chromium
+    });
     const page = await browser.newPage();
     await page.goto(authUrl, { waitUntil: 'networkidle2' });
 
