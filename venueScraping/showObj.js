@@ -1,12 +1,11 @@
 const showObj = {
     '3756109-sleeping-village': {
-      name: 'Sleeping Village',
-      artists: [],
-      playlist: '',
-      shows: [],
-      songs: [],
-      songs: []
-    }, 
+      "_id": "3756109-sleeping-village",
+      "address": "3734 W. Belmont Ave. Chicago, IL 60618",
+      "venueName": "Sleeping Village",
+      "playlistId": "4UCubkjaZhpanZZ87RFuu9",
+      "website": "https://sleeping-village.com"
+  },
     '3386364-chop-shop': {
       name: 'Chop Shop',
       artists: [],
@@ -23,13 +22,6 @@ const showObj = {
     }, 
     '4444301-schubas': {
       name: 'Schubas',
-      artists: [],
-      playlist: '',
-      shows: [],
-      songs: []
-    }, 
-    '3756109-sleeping-village': {
-      name: 'Sleeping Village',
       artists: [],
       playlist: '',
       shows: [],
