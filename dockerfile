@@ -4,7 +4,6 @@ FROM arm32v7/node:18-buster-slim
 # Install necessary dependencies for Puppeteer
 RUN apt-get update && apt-get install -y \
     wget \
-    --no-install-recommends \
     ca-certificates \
     fonts-liberation \
     libappindicator3-1 \
