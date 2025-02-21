@@ -2,7 +2,7 @@
 FROM arm32v7/node:18-buster-slim
 
 # Install necessary dependencies for Puppeteer
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y -y chromium --no-install-recommends \
     wget \
     ca-certificates \
     fonts-liberation \
@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Set the working directory in the container
 WORKDIR /app
