@@ -20,12 +20,11 @@ async function login() {
 
   try {
     const browser = await puppeteer.launch({
-      //headless: true, // Run in headless mode
-      args: ['--no-sandbox', '--disable-setuid-sandbox'], // Disable sandboxing
-      // executablePath: '/usr/bin/chromium', // first try
-      // executablePath: '/usr/bin/chromium-browser', // second try
-      executablePath: '/app/.apt/usr/bin/chromium', // third try    
-      });
+      headless: true,
+      executablePath: '/usr/bin/chromium', // or another correct path
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      userDataDir: '/tmp/puppeteer_cache', // custom cache path  
+    });
     const page = await browser.newPage();
     await page.goto(authUrl, { waitUntil: 'networkidle2' });
 
