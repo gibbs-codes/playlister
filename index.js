@@ -11,18 +11,8 @@ import spotifyBatch from './spotifyLogic/spotifyBatch.js';
 import login from './auth/login.js';
 import spotifyAuth from './auth/spotifyAuth.js';
 import { getAccessToken } from './auth/tokenStore.js';
-import { exec } from 'child_process';
 
 dotenv.config();
-
-
-exec('which chromium-browser', (err, stdout, stderr) => {
-  if (err) {
-    console.error('Error executing command:', err);
-    return;
-  }
-  console.log('Chromium path:', stdout.trim());
-});
 
 const app = express();
 app.use(bodyParser.json());

@@ -27,7 +27,8 @@ async function getShows(venue) {
       args: ['--no-sandbox', '--disable-setuid-sandbox'], // Disable sandboxing
       //executablePath: '/usr/bin/chromium', // first try
       // executablePath: '/usr/bin/chromium-browser', // second try
-      executablePath: '/app/.apt/usr/bin/chromium', // third try    });
+      executablePath: '/app/.apt/usr/bin/chromium', // third try    
+      });
     const page = await browser.newPage();
   
     await page.goto(url, { waitUntil: 'networkidle2' });
