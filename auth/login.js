@@ -21,9 +21,8 @@ async function login() {
   try {
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: '/usr/bin/chromium', // or another correct path
+      executablePath: '/usr/bin/chromium',  // or '/usr/bin/chromium-browser'
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      userDataDir: '/tmp/puppeteer_cache', // custom cache path  
     });
     const page = await browser.newPage();
     await page.goto(authUrl, { waitUntil: 'networkidle2' });
