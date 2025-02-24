@@ -14,6 +14,16 @@ import { getAccessToken } from './auth/tokenStore.js';
 
 dotenv.config();
 
+const exec = require('child_process').exec;
+
+exec('which chromium-browser', (err, stdout, stderr) => {
+  if (err) {
+    console.error('Error executing command:', err);
+    return;
+  }
+  console.log('Chromium path:', stdout.trim());
+});
+
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
