@@ -11,10 +11,10 @@ import spotifyBatch from './spotifyLogic/spotifyBatch.js';
 import login from './auth/login.js';
 import spotifyAuth from './auth/spotifyAuth.js';
 import { getAccessToken } from './auth/tokenStore.js';
+import { exec } from 'child_process';
 
 dotenv.config();
 
-const exec = require('child_process').exec;
 
 exec('which chromium-browser', (err, stdout, stderr) => {
   if (err) {
