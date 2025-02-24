@@ -20,7 +20,7 @@ async function login() {
 
   try {
     const browser = await puppeteer.launch({
-      headless: true, // Run in headless mode
+      //headless: true, // Run in headless mode
       args: ['--no-sandbox', '--disable-setuid-sandbox'], // Disable sandboxing
       // executablePath: '/usr/bin/chromium', // first try
       // executablePath: '/usr/bin/chromium-browser', // second try
