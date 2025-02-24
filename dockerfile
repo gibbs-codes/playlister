@@ -1,22 +1,41 @@
 # Use an official Node.js runtime as a parent image
-FROM timbru31/node-chrome:18
+FROM arm32v7/node:18-buster-slim
 
-RUN apt-get update
-RUN apt-get install chromium -y
+# Install necessary dependencies for Puppeteer
+RUN apt-get update && apt-get install -y \
+    wget \
+    ca-certificates \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    libu2f-udev \
+    libvulkan1 \
+    chromium-browser \
+    --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV HOME=/home/app-user
-RUN useradd -m -d $HOME -s /bin/bash app-user 
-RUN mkdir -p $HOME/app
-WORKDIR $HOME/app
+# Set the working directory in the container
+WORKDIR /app
 
+# Copy package.json and package-lock.json into the container
 COPY package*.json ./
-COPY index.js ./
-RUN chown -R app-user:app-user $HOME
 
-USER app-user
-
-
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Install any needed packages
 RUN npm install
 
 # Copy the current directory contents into the container at /app
