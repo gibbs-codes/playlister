@@ -24,9 +24,9 @@ async function getShows(venue) {
     const url = `https://www.songkick.com/venues/${venue}/calendar`;
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: '/usr/bin/chromium',  // or '/usr/bin/chromium-browser'
-      args: ['--no-sandbox', '--disable-setuid-sandbox'], 
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
+    
     const page = await browser.newPage();
   
     await page.goto(url, { waitUntil: 'networkidle2' });

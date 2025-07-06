@@ -2,7 +2,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import { getAccessToken } from '../auth/tokenStore.js';
 dotenv.config();
-const user_id =  process.env.USER_ID 
+const user_id =  '315o6js2bgmqotzowgyhnoyz5t24'
 
 async function createPlaylist(name, description) {
   const access_token = getAccessToken();

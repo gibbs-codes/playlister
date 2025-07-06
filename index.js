@@ -45,7 +45,7 @@ app.use('/makeReport', async (req, res) => {
 app.use(express.json());
 app.use('/', spotifyAuth);
 
-const port = process.env.PORT || 8888;
+const port = 8888;
 
 app.listen(port, async () => {
   console.log(`its tune time on port ${port}`);

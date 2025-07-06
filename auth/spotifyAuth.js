@@ -6,10 +6,10 @@ import { setAccessToken } from './tokenStore.js';
 dotenv.config();
 
 const router = express.Router();
-const client_id = process.env.CLIENT_ID;
-const client_secret = process.env.SECRET;
-const redirect_uri = process.env.REDIRECT_URI;
-const scopes = process.env.SCOPES;
+const client_id = 'aaee9bf0dc8b48eab082319bb48d53bb';
+const client_secret = 'c04e57e206d542478d6fedfe46c04959';
+const redirect_uri = 'http://localhost:8888/callback';
+const scopes = 'user-read-private user-read-email playlist-read-private playlist-modify-private playlist-modify-public';
 
 
 router.get('/callback', async (req, res) => {

@@ -5,9 +5,9 @@ import puppeteer from 'puppeteer';
 
 dotenv.config();
 
-const client_id = process.env.CLIENT_ID;
-const client_secret = process.env.SECRET;
-const redirect_uri = process.env.REDIRECT_URI;
+const client_id = 'aaee9bf0dc8b48eab082319bb48d53bb';
+const client_secret = 'c04e57e206d542478d6fedfe46c04959';
+const redirect_uri = 'http://localhost:8888/callback';
 const scopes = 'user-read-private user-read-email playlist-read-private playlist-modify-private playlist-modify-public';
 
 async function login() {
@@ -21,15 +21,15 @@ async function login() {
   try {
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: '/usr/bin/chromium',  // or '/usr/bin/chromium-browser'
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
+    
     const page = await browser.newPage();
     await page.goto(authUrl, { waitUntil: 'networkidle2' });
 
     await page.waitForSelector('#login-username', { timeout: 60000 });
-    await page.type('#login-username', process.env.SPOTIFY_USERNAME);
-    await page.type('#login-password', process.env.SPOTIFY_PASSWORD);
+    await page.type('#login-username', 'tillage.planets0g@icloud.com');
+    await page.type('#login-password', 'vysket-pewxek-wowbI6');
     await page.click('#login-button');
 
     console.log('logged in!');

@@ -1,25 +1,5 @@
-# Use an official Node.js runtime as a parent image
-FROM arm32v7/node:18-buster-slim
-
-# Install necessary dependencies for Puppeteer
-RUN apt-get update && apt-get install -y \
-    wget \
-    ca-certificates \
-    fonts-liberation \
-    libappindicator3-1 \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libcups2 \
-    libgdk-pixbuf2.0-0 \
-    libnspr4 \
-    libnss3 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    xdg-utils \
-    --no-install-recommends
+# Use the Puppeteer base image for Node.js and Chromium
+FROM ghcr.io/puppeteer/puppeteer:latest
 
 # Set the working directory in the container
 WORKDIR /app
@@ -27,14 +7,23 @@ WORKDIR /app
 # Copy package.json and package-lock.json into the container
 COPY package*.json ./
 
-# Install any needed packages
+# Temporarily switch to root to fix permissions
+USER root
+
+# Change ownership of the working directory to the Puppeteer user
+RUN chown -R pptruser:pptruser /app
+
+# Switch back to the Puppeteer user for security
+USER pptruser
+
+# Install dependencies
 RUN npm install
 
-# Copy the current directory contents into the container at /app
+# Copy the rest of the application files into the container
 COPY . .
 
-# Make port 8888 available to the world outside this container
+# Expose the port your application will run on
 EXPOSE 8888
 
-# Run the app when the container launches
+# Run the application
 CMD ["node", "index.js"]
