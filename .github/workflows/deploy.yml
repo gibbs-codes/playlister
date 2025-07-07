@@ -1,0 +1,146 @@
+# .github/workflows/deploy.yml
+name: Deploy Playlister to Mac Mini
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  APP_NAME: playlister
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure Docker environment
+      run: |
+        echo "Setting up Docker environment for ${{ github.repository }}..."
+        
+        # Create Docker config directory
+        mkdir -p ~/.docker
+        
+        # Create config without keychain
+        cat > ~/.docker/config.json << 'EOF'
+        {
+          "auths": {},
+          "credsStore": "",
+          "credHelpers": {},
+          "experimental": "disabled"
+        }
+        EOF
+        
+        # Ensure shared network exists
+        docker network create gibbs-apps 2>/dev/null || echo "Network already exists"
+        
+        # Test Docker access
+        echo "Testing Docker access..."
+        docker --version
+        
+    - name: Set up deployment directory
+      run: |
+        DEPLOY_DIR=~/deployments/${{ env.APP_NAME }}
+        echo "Cleaning up old deployment..."
+        
+        # Stop any existing container
+        docker stop playlister-production 2>/dev/null || true
+        docker rm playlister-production 2>/dev/null || true
+        
+        # Clean up directory but preserve logs
+        rm -rf $DEPLOY_DIR
+        mkdir -p $DEPLOY_DIR
+        mkdir -p $DEPLOY_DIR/logs
+        
+        echo "Copying new code..."
+        cp -r $GITHUB_WORKSPACE/* $DEPLOY_DIR/
+        
+    - name: Copy secrets
+      run: |
+        DEPLOY_DIR=~/deployments/${{ env.APP_NAME }}
+        APP_SECRETS=~/secrets/${{ env.APP_NAME }}
+        
+        echo "Copying environment file..."
+        if [ -f "$APP_SECRETS/production.env" ]; then
+          cp $APP_SECRETS/production.env $DEPLOY_DIR/.env
+          echo "✅ Environment file copied as .env"
+        else
+          echo "❌ Environment file not found at $APP_SECRETS/production.env"
+          exit 1
+        fi
+        
+    - name: Build and start container
+      env:
+        DOCKER_CONFIG: ~/.docker
+        DOCKER_BUILDKIT: 0
+      run: |
+        cd ~/deployments/${{ env.APP_NAME }}
+        echo "Building Playlister..."
+        
+        # Stop any existing container
+        docker stop playlister-production 2>/dev/null || true
+        docker rm playlister-production 2>/dev/null || true
+        
+        # Build the image
+        docker build --no-cache -t playlister:latest .
+        
+        # Run the container with shared network
+        docker run -d \
+          --name playlister-production \
+          --restart unless-stopped \
+          --network gibbs-apps \
+          -p 8888:8888 \
+          -v $(pwd)/logs:/usr/src/app/logs:rw \
+          --env-file .env \
+          -e NODE_ENV=production \
+          -e PORT=8888 \
+          playlister:latest
+        
+    - name: Verify deployment
+      run: |
+        echo "Waiting for container to start..."
+        sleep 15
+        
+        echo "Checking container status..."
+        docker ps | grep playlister-production
+        
+        echo "Testing health endpoint..."
+        if curl -f http://localhost:8888/health; then
+          echo "✅ Playlister deployment successful!"
+        else
+          echo "❌ Health check failed"
+          echo "Container logs:"
+          docker logs playlister-production
+          exit 1
+        fi
+        
+        echo "Testing config endpoint..."
+        curl -s http://localhost:8888/debug/spotify-config | jq '.' || curl -s http://localhost:8888/debug/spotify-config
+        
+        echo "Testing venues endpoint..."
+        curl -s http://localhost:8888/api/venues/list | jq '.' || curl -s http://localhost:8888/api/venues/list
+        
+    - name: Clean up old images
+      run: |
+        docker image prune -f --filter label=app=playlister || true
+        
+    - name: Show final status
+      run: |
+        echo "=== 🎵 PLAYLISTER DEPLOYMENT STATUS ==="
+        echo "🎉 PLAYLISTER v2 DEPLOYED! 🎉"
+        echo ""
+        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep playlister-production || docker ps
+        echo ""
+        echo "🎵 Your Smart Venue Playlist Generator:"
+        echo "  🎵 Playlister: http://localhost:8888 (Smart Playlist Generator)"
+        echo "  🔧 Config: http://localhost:8888/debug/spotify-config"
+        echo "  📍 Venues: http://localhost:8888/api/venues/list"
+        echo ""
+        echo "🔄 Network: gibbs-apps"
+        docker network inspect gibbs-apps --format='{{range .Containers}}  📦 {{.Name}}: {{.IPv4Address}}{{"\n"}}{{end}}' | grep playlister || echo "  📦 playlister-production: Connected"
+        echo ""
+        echo "⏰ Weekly Updates: Sundays at 2:00 AM"
+        echo "🎯 MISSION ACCOMPLISHED! 🎯"

@@ -62,231 +62,158 @@ class SpotifyAPIService {
     }
   }
 
-// Smart band name splitting for multi-artist listings
-splitMultiArtistNames(artistName) {
-  console.log(`🔍 Checking if "${artistName}" contains multiple artists...`);
-  
-  // Common separators for multiple artists
-  const separators = [
-    ' and ', ' & ', ' + ', ' w/ ', ' with ', ' ft. ', ' feat. ', ' featuring '
-  ];
-  
-  for (const separator of separators) {
-    if (artistName.toLowerCase().includes(separator.toLowerCase())) {
-      const parts = artistName.split(new RegExp(separator, 'i'))
-        .map(part => part.trim())
-        .filter(part => part.length > 0);
-      
-      if (parts.length > 1) {
-        console.log(`✂️  Split "${artistName}" into: ${parts.join(', ')}`);
-        return parts;
-      }
-    }
-  }
-  
-  // No splitting needed
-  return [artistName];
-}
-
-// Updated method that handles multi-artist names
-async getArtistData(artistName) {
-  console.log(`🎵 Processing artist: ${artistName}`);
-  
-  // Check cache first
-  const cached = await this.cache.getArtist(artistName);
-  
-  if (cached) {
-    const daysSinceCheck = (Date.now() - cached.lastSpotifyCheck) / (1000 * 60 * 60 * 24);
+  // Smart band name splitting for multi-artist listings
+  splitMultiArtistNames(artistName) {
+    console.log(`🔍 Checking if "${artistName}" contains multiple artists...`);
     
-    if (daysSinceCheck < 7 && cached.spotifyId) {
-      console.log(`📋 Using cached data for: ${artistName}`);
-      return cached;
-    }
-  }
-
-  // Try to find as a single artist first
-  const singleResult = await this.searchArtistAndTracks(artistName);
-  if (singleResult) {
-    return singleResult;
-  }
-
-  // If no single match, try splitting into multiple artists
-  const artistParts = this.splitMultiArtistNames(artistName);
-  
-  if (artistParts.length > 1) {
-    console.log(`🎭 Trying to find individual artists from "${artistName}"...`);
+    // Common separators for multiple artists
+    const separators = [
+      ' and ', ' & ', ' + ', ' w/ ', ' with ', ' ft. ', ' feat. ', ' featuring '
+    ];
     
-    const foundArtists = [];
-    const allTracks = [];
-    
-    for (const part of artistParts) {
-      // Clean up common prefixes/suffixes
-      const cleanPart = this.cleanArtistName(part);
-      
-      if (cleanPart.length >= 2) { // Skip very short parts
-        const partResult = await this.searchArtistAndTracks(cleanPart);
-        if (partResult) {
-          foundArtists.push(partResult.name);
-          allTracks.push(...partResult.topTracks);
-          console.log(`  ✅ Found: ${partResult.name}`);
-        } else {
-          console.log(`  ❌ Not found: ${cleanPart}`);
+    for (const separator of separators) {
+      if (artistName.toLowerCase().includes(separator.toLowerCase())) {
+        const parts = artistName.split(new RegExp(separator, 'i'))
+          .map(part => part.trim())
+          .filter(part => part.length > 0);
+        
+        if (parts.length > 1) {
+          console.log(`✂️  Split "${artistName}" into: ${parts.join(', ')}`);
+          return parts;
         }
       }
     }
     
-    if (foundArtists.length > 0) {
-      // Create a combined result for the multi-artist listing
-      const combinedResult = {
-        name: artistName, // Keep original name for cache
-        spotifyId: `multi_${foundArtists.join('_')}`, // Synthetic ID
-        topTracks: allTracks.slice(0, 6), // More tracks since it's multiple artists
-        popularity: Math.max(...foundArtists.map(() => 50)), // Reasonable default
-        isMultiArtist: true,
-        foundArtists: foundArtists
+    // No splitting needed
+    return [artistName];
+  }
+
+  // Clean up artist names (remove common prefixes/suffixes)
+  cleanArtistName(name) {
+    return name
+      .replace(/^(the\s+)/i, '') // Remove "the" prefix
+      .replace(/\s+(band|duo|trio|quartet)$/i, '') // Remove band type suffixes
+      .replace(/\s+(live|acoustic|unplugged)$/i, '') // Remove performance type
+      .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }
+
+  // Search for an artist and get their info + top tracks
+  async searchArtistAndTracks(artistName) {
+    console.log(`🔍 Searching Spotify for: ${artistName}`);
+    
+    try {
+      // Search for the artist with more results to find better matches
+      const searchData = await this.spotifyRequest(`/search?q=${encodeURIComponent(artistName)}&type=artist&limit=10`);
+      
+      if (!searchData.artists.items.length) {
+        console.log(`❌ No Spotify results for: ${artistName}`);
+        return null;
+      }
+
+      // Find the best match using strict name matching
+      const bestMatch = this.findBestArtistMatch(artistName, searchData.artists.items);
+      
+      if (!bestMatch) {
+        console.log(`❌ No exact match for "${artistName}" in Spotify results`);
+        console.log(`   Available: ${searchData.artists.items.slice(0, 3).map(a => a.name).join(', ')}`);
+        return null;
+      }
+
+      console.log(`✅ Found exact match: ${bestMatch.name} (${bestMatch.popularity} popularity)`);
+
+      // Get their top tracks
+      const topTracksData = await this.spotifyRequest(`/artists/${bestMatch.id}/top-tracks?market=US`);
+      const topTracks = topTracksData.tracks.slice(0, 3).map(track => track.uri); // Top 3 tracks
+
+      if (topTracks.length === 0) {
+        console.log(`⚠️ ${bestMatch.name} has no popular tracks, skipping...`);
+        return null;
+      }
+
+      const artistData = {
+        name: bestMatch.name,
+        spotifyId: bestMatch.id,
+        topTracks: topTracks,
+        popularity: bestMatch.popularity
       };
+
+      // Cache the artist data
+      await this.cache.saveArtist(artistData);
       
-      // Cache the combined result
-      await this.cache.saveArtist(combinedResult);
-      
-      console.log(`✅ Multi-artist success: Found ${foundArtists.length}/${artistParts.length} artists`);
-      console.log(`   Artists: ${foundArtists.join(', ')}`);
-      
-      return combinedResult;
+      return artistData;
+
+    } catch (error) {
+      console.error(`❌ Error searching for ${artistName}:`, error.message);
+      return null;
     }
   }
 
-  // Nothing found
-  console.log(`❌ No matches found for: ${artistName}`);
-  return null;
-}
-
-// Clean up artist names (remove common prefixes/suffixes)
-cleanArtistName(name) {
-  return name
-    .replace(/^(the\s+)/i, '') // Remove "the" prefix
-    .replace(/\s+(band|duo|trio|quartet)$/i, '') // Remove band type suffixes
-    .replace(/\s+(live|acoustic|unplugged)$/i, '') // Remove performance type
-    .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .trim();
-}
-
-// Update your src/services/spotify-api.js - replace the searchArtistAndTracks method
-
-// Search for an artist and get their info + top tracks
-async searchArtistAndTracks(artistName) {
-  console.log(`🔍 Searching Spotify for: ${artistName}`);
-  
-  try {
-    // Search for the artist with more results to find better matches
-    const searchData = await this.spotifyRequest(`/search?q=${encodeURIComponent(artistName)}&type=artist&limit=10`);
-    
-    if (!searchData.artists.items.length) {
-      console.log(`❌ No Spotify results for: ${artistName}`);
-      return null;
-    }
-
-    // Find the best match using strict name matching
-    const bestMatch = this.findBestArtistMatch(artistName, searchData.artists.items);
-    
-    if (!bestMatch) {
-      console.log(`❌ No exact match for "${artistName}" in Spotify results`);
-      console.log(`   Available: ${searchData.artists.items.slice(0, 3).map(a => a.name).join(', ')}`);
-      return null;
-    }
-
-    console.log(`✅ Found exact match: ${bestMatch.name} (${bestMatch.popularity} popularity)`);
-
-    // Get their top tracks
-    const topTracksData = await this.spotifyRequest(`/artists/${bestMatch.id}/top-tracks?market=US`);
-    const topTracks = topTracksData.tracks.slice(0, 3).map(track => track.uri); // Top 3 tracks
-
-    if (topTracks.length === 0) {
-      console.log(`⚠️ ${bestMatch.name} has no popular tracks, skipping...`);
-      return null;
-    }
-
-    const artistData = {
-      name: bestMatch.name,
-      spotifyId: bestMatch.id,
-      topTracks: topTracks,
-      popularity: bestMatch.popularity
+  // Strict artist name matching to prevent false positives
+  findBestArtistMatch(searchName, spotifyResults) {
+    const normalizeForMatching = (name) => {
+      return name.toLowerCase()
+        .replace(/[^\w\s]/g, '') // Remove punctuation  
+        .replace(/\s+/g, ' ')    // Normalize whitespace
+        .trim();
     };
 
-    // Cache the artist data
-    await this.cache.saveArtist(artistData);
+    const searchNormalized = normalizeForMatching(searchName);
     
-    return artistData;
-
-  } catch (error) {
-    console.error(`❌ Error searching for ${artistName}:`, error.message);
+    // Try different matching strategies in order of preference
+    
+    // 1. Exact match (case insensitive)
+    for (const artist of spotifyResults) {
+      if (normalizeForMatching(artist.name) === searchNormalized) {
+        console.log(`🎯 Exact match: "${searchName}" = "${artist.name}"`);
+        return artist;
+      }
+    }
+    
+    // 2. Handle common variations ("The Band" vs "Band")
+    for (const artist of spotifyResults) {
+      const artistNormalized = normalizeForMatching(artist.name);
+      
+      // Remove "the" from both and compare
+      const searchNoThe = searchNormalized.replace(/^the\s+/, '');
+      const artistNoThe = artistNormalized.replace(/^the\s+/, '');
+      
+      if (searchNoThe === artistNoThe && searchNoThe.length > 0) {
+        console.log(`🎯 Match without "the": "${searchName}" = "${artist.name}"`);
+        return artist;
+      }
+    }
+    
+    // 3. Flexible matching for reasonable variations (but still strict)
+    for (const artist of spotifyResults) {
+      const artistNormalized = normalizeForMatching(artist.name);
+      
+      // Allow if search name is contained in artist name AND they're close in length
+      const lengthDiff = Math.abs(searchNormalized.length - artistNormalized.length);
+      
+      if (artistNormalized.includes(searchNormalized) && lengthDiff <= 4 && searchNormalized.length >= 3) {
+        console.log(`🎯 Flexible match: "${searchName}" found in "${artist.name}"`);
+        return artist;
+      }
+      
+      // Or if artist name is contained in search name (handles extra words)
+      if (searchNormalized.includes(artistNormalized) && lengthDiff <= 4 && artistNormalized.length >= 3) {
+        console.log(`🎯 Flexible match: "${artist.name}" found in "${searchName}"`);
+        return artist;
+      }
+    }
+    
+    // 4. No match found - be strict!
+    console.log(`❌ No acceptable match for "${searchName}"`);
+    console.log(`   Considered: ${spotifyResults.slice(0, 3).map(a => `"${a.name}"`).join(', ')}`);
     return null;
   }
-}
 
-// Strict artist name matching to prevent false positives
-findBestArtistMatch(searchName, spotifyResults) {
-  const normalizeForMatching = (name) => {
-    return name.toLowerCase()
-      .replace(/[^\w\s]/g, '') // Remove punctuation  
-      .replace(/\s+/g, ' ')    // Normalize whitespace
-      .trim();
-  };
-
-  const searchNormalized = normalizeForMatching(searchName);
-  
-  // Try different matching strategies in order of preference
-  
-  // 1. Exact match (case insensitive)
-  for (const artist of spotifyResults) {
-    if (normalizeForMatching(artist.name) === searchNormalized) {
-      console.log(`🎯 Exact match: "${searchName}" = "${artist.name}"`);
-      return artist;
-    }
-  }
-  
-  // 2. Handle common variations ("The Band" vs "Band")
-  for (const artist of spotifyResults) {
-    const artistNormalized = normalizeForMatching(artist.name);
-    
-    // Remove "the" from both and compare
-    const searchNoThe = searchNormalized.replace(/^the\s+/, '');
-    const artistNoThe = artistNormalized.replace(/^the\s+/, '');
-    
-    if (searchNoThe === artistNoThe && searchNoThe.length > 0) {
-      console.log(`🎯 Match without "the": "${searchName}" = "${artist.name}"`);
-      return artist;
-    }
-  }
-  
-  // 3. Flexible matching for reasonable variations (but still strict)
-  for (const artist of spotifyResults) {
-    const artistNormalized = normalizeForMatching(artist.name);
-    
-    // Allow if search name is contained in artist name AND they're close in length
-    const lengthDiff = Math.abs(searchNormalized.length - artistNormalized.length);
-    
-    if (artistNormalized.includes(searchNormalized) && lengthDiff <= 4 && searchNormalized.length >= 3) {
-      console.log(`🎯 Flexible match: "${searchName}" found in "${artist.name}"`);
-      return artist;
-    }
-    
-    // Or if artist name is contained in search name (handles extra words)
-    if (searchNormalized.includes(artistNormalized) && lengthDiff <= 4 && artistNormalized.length >= 3) {
-      console.log(`🎯 Flexible match: "${artist.name}" found in "${searchName}"`);
-      return artist;
-    }
-  }
-  
-  // 4. No match found - be strict!
-  console.log(`❌ No acceptable match for "${searchName}"`);
-  console.log(`   Considered: ${spotifyResults.slice(0, 3).map(a => `"${a.name}"`).join(', ')}`);
-  return null;
-}
-
-  // Get or refresh artist data (checks cache first)
+  // Updated method that handles multi-artist names
   async getArtistData(artistName) {
+    console.log(`🎵 Processing artist: ${artistName}`);
+    
     // Check cache first
     const cached = await this.cache.getArtist(artistName);
     
@@ -299,8 +226,61 @@ findBestArtistMatch(searchName, spotifyResults) {
       }
     }
 
-    // Search Spotify for fresh data
-    return await this.searchArtistAndTracks(artistName);
+    // Try to find as a single artist first
+    const singleResult = await this.searchArtistAndTracks(artistName);
+    if (singleResult) {
+      return singleResult;
+    }
+
+    // If no single match, try splitting into multiple artists
+    const artistParts = this.splitMultiArtistNames(artistName);
+    
+    if (artistParts.length > 1) {
+      console.log(`🎭 Trying to find individual artists from "${artistName}"...`);
+      
+      const foundArtists = [];
+      const allTracks = [];
+      
+      for (const part of artistParts) {
+        // Clean up common prefixes/suffixes
+        const cleanPart = this.cleanArtistName(part);
+        
+        if (cleanPart.length >= 2) { // Skip very short parts
+          const partResult = await this.searchArtistAndTracks(cleanPart);
+          if (partResult) {
+            foundArtists.push(partResult.name);
+            allTracks.push(...partResult.topTracks);
+            console.log(`  ✅ Found: ${partResult.name}`);
+          } else {
+            console.log(`  ❌ Not found: ${cleanPart}`);
+          }
+        }
+      }
+      
+      if (foundArtists.length > 0) {
+        // Create a combined result for the multi-artist listing
+        const combinedResult = {
+          name: artistName, // Keep original name for cache
+          spotifyId: `multi_${foundArtists.join('_')}`, // Synthetic ID
+          topTracks: allTracks.slice(0, 6), // More tracks since it's multiple artists
+          popularity: Math.max(...foundArtists.map(() => 50)), // Reasonable default
+          isMultiArtist: true,
+          foundArtists: foundArtists
+        };
+        
+        // Cache the combined result
+        await this.cache.saveArtist(combinedResult);
+        
+        console.log(`✅ Multi-artist success: Found ${foundArtists.length}/${artistParts.length} artists`);
+        console.log(`   Artists: ${foundArtists.join(', ')}`);
+        
+        return combinedResult;
+      }
+    }
+
+    // Nothing found
+    console.log(`❌ No matches found for: ${artistName}`);
+    return null;
   }
 
   // Get current user's playlists

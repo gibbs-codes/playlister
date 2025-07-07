@@ -1,13 +1,32 @@
-version: '3.8'
-
+# docker-compose.yml
 services:
-  web:
-    build: .
-    container_name: upcoming
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: playlister-production
     ports:
       - "8888:8888"
+    environment:
+      - NODE_ENV=production
+      - PORT=8888
     env_file:
-      - stack.env
+      - .env
+    restart: unless-stopped
+    networks:
+      - gibbs-apps
     volumes:
-      - .:/app
-    network_mode: host
+      - ./logs:/usr/src/app/logs:rw
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    labels:
+      - "app=playlister"
+      - "environment=production"
+
+networks:
+  gibbs-apps:
+    external: true

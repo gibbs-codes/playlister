@@ -1,29 +1,43 @@
-# Use the Puppeteer base image for Node.js and Chromium
-FROM ghcr.io/puppeteer/puppeteer:latest
+# Dockerfile
+FROM node:18-alpine
 
-# Set the working directory in the container
-WORKDIR /app
+# Set working directory
+WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json into the container
+# Install system dependencies for native modules
+RUN apk add --no-cache \
+    bash \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Copy package files
 COPY package*.json ./
 
-# Temporarily switch to root to fix permissions
-USER root
-
-# Change ownership of the working directory to the Puppeteer user
-RUN chown -R pptruser:pptruser /app
-
-# Switch back to the Puppeteer user for security
-USER pptruser
-
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production && npm cache clean --force
 
-# Copy the rest of the application files into the container
+# Copy application code
 COPY . .
 
-# Expose the port your application will run on
+# Create logs directory
+RUN mkdir -p logs && chmod 755 logs
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S playlister && \
+    adduser -S playlister -u 1001 -G playlister
+
+# Change ownership of app directory
+RUN chown -R playlister:playlister /usr/src/app
+
+# Switch to non-root user
+USER playlister
+
+# Expose port
 EXPOSE 8888
 
-# Run the application
-CMD ["node", "index.js"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8888/health || exit 1
+
+# Start application
+CMD ["node", "src/index.js"]

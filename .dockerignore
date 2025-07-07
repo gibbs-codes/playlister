@@ -1,3 +1,4 @@
+# .dockerignore
 # Ignore node_modules
 node_modules
 
@@ -24,3 +25,19 @@ docker-compose.yml
 # Ignore OS generated files
 .DS_Store
 Thumbs.db
+
+# Ignore git
+.git
+.gitignore
+
+# Ignore GitHub workflows
+.github
+
+# Ignore development files
+nodemon.json
+.env.example
+
+# Ignore test files
+test
+*.test.js
+__tests__
