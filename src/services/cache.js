@@ -8,6 +8,7 @@ const venueSchema = new mongoose.Schema({
   scrapeUrl: { type: String, required: true },
   playlistId: String,
   lastScraped: { type: Date, default: Date.now },
+  previousArtists: [String], // Track previous scraping results for cleanup
   scrapingConfig: {
     type: Object,
     default: {}
@@ -102,6 +103,21 @@ class CacheService {
       { playlistId },
       { new: true }
     );
+  }
+
+  async updateVenuePreviousArtists(venueId, artists) {
+    await this.connect();
+    return await Venue.findOneAndUpdate(
+      { id: venueId },
+      { previousArtists: artists, lastScraped: new Date() },
+      { new: true }
+    );
+  }
+
+  // Remove artist from global cache
+  async removeArtist(name) {
+    await this.connect();
+    return await Artist.findOneAndDelete({ name });
   }
 
   // Artist management  

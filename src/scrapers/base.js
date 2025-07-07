@@ -28,13 +28,22 @@ class VenueScraper {
       const html = response.data;
       console.log(`📄 Fetched ${html.length} characters from ${venueConfig.name}`);
 
-      // Try traditional parsing first (faster)
-      let artists = this.parseTraditional(html, venueConfig.scrapingConfig);
+      let artists = [];
       
-      // If traditional parsing fails or finds few results, use LLM
-      if (artists.length < 2) {
-        console.log('🤖 Traditional parsing found few results, using LLM...');
+      // Determine parsing strategy based on venue config
+      if (venueConfig.scrapingConfig.type === 'generic') {
+        // Go straight to LLM for real venue websites
+        console.log('🤖 Using LLM parsing for real venue website...');
         artists = await this.llmParser.extractArtists(html, venueConfig.name);
+      } else {
+        // Try traditional parsing first (for SongKick, etc.)
+        artists = this.parseTraditional(html, venueConfig.scrapingConfig);
+        
+        // If traditional parsing fails or finds few results, use LLM
+        if (artists.length < 2) {
+          console.log('🤖 Traditional parsing found few results, using LLM...');
+          artists = await this.llmParser.extractArtists(html, venueConfig.name);
+        }
       }
 
       console.log(`✅ Found ${artists.length} artists for ${venueConfig.name}`);

@@ -2,6 +2,7 @@
 import VenueScraper from '../scrapers/base.js';
 import SpotifyAPIService from './spotify-api.js';
 import CacheService from './cache.js';
+import ArtistCleanupService from './cleanup.js';
 import { getVenueConfig } from '../config/venues.js';
 
 class PlaylistBuilder {
@@ -9,6 +10,7 @@ class PlaylistBuilder {
     this.cache = new CacheService();
     this.scraper = new VenueScraper();
     this.spotify = new SpotifyAPIService(this.cache);
+    this.cleanup = new ArtistCleanupService();
   }
 
   // Main workflow: scrape venue → find artists on Spotify → update playlist
@@ -32,6 +34,16 @@ class PlaylistBuilder {
       }
 
       console.log(`✅ Found ${scrapeResult.artists.length} artists: ${scrapeResult.artists.join(', ')}`);
+
+      // Step 1.5: Clean up stale artists
+      console.log(`\n🧹 Step 1.5: Cleaning up outdated artists...`);
+      const cleanupResult = await this.cleanup.cleanupStaleArtists(venueId, scrapeResult.artists);
+      
+      if (cleanupResult.removedArtists.length > 0) {
+        console.log(`🗑️  Removed ${cleanupResult.removedArtists.length} outdated artists: ${cleanupResult.removedArtists.join(', ')}`);
+      } else {
+        console.log(`✅ No outdated artists to remove`);
+      }
 
       // Step 2: Get Spotify data for each artist
       console.log(`\n🎵 Step 2: Finding artists on Spotify...`);
@@ -91,12 +103,18 @@ class PlaylistBuilder {
         tracksAdded: allTracks.length,
         playlistId: playlistId,
         foundArtists: foundArtists,
-        missedArtists: missedArtists
+        missedArtists: missedArtists,
+        removedArtists: cleanupResult.removedArtists,
+        cleanupStats: {
+          removed: cleanupResult.removedArtists.length,
+          kept: cleanupResult.keptArtists.length
+        }
       };
 
       console.log(`\n✅ Successfully updated ${venueConfig.name} playlist!`);
       console.log(`   📊 ${foundArtists.length}/${scrapeResult.artists.length} artists found on Spotify`);
       console.log(`   🎵 ${allTracks.length} tracks added to playlist`);
+      console.log(`   🧹 ${cleanupResult.removedArtists.length} outdated artists removed`);
       
       return summary;
 
