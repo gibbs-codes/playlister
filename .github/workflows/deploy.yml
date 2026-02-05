@@ -1,5 +1,5 @@
 # .github/workflows/deploy.yml
-name: Deploy Playlister to Mac Mini
+name: Deploy Playlister to Raspberry Pi
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux, ARM64]
     
     steps:
     - name: Checkout code
@@ -143,4 +143,5 @@ jobs:
         docker network inspect gibbs-apps --format='{{range .Containers}}  📦 {{.Name}}: {{.IPv4Address}}{{"\n"}}{{end}}' | grep playlister || echo "  📦 playlister-production: Connected"
         echo ""
         echo "⏰ Weekly Updates: Sundays at 2:00 AM"
+        echo "🍓 Running on Raspberry Pi 5"
         echo "🎯 MISSION ACCOMPLISHED! 🎯"
