@@ -5,6 +5,10 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: playlister-production
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
     ports:
       - "8888:8888"
     environment:
