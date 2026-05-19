@@ -180,8 +180,8 @@ app.post('/api/cleanup/force/:venueId', async (req, res) => {
 });
 
 // List all available venues
-app.get('/api/venues/list', (req, res) => {
-  const { venues } = require('./config/venues.js');
+app.get('/api/venues/list', async (req, res) => {
+  const { venues } = await import('./config/venues.js');
   res.json({
     total: getVenueCount(),
     venues: venues.map(v => ({
