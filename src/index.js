@@ -80,6 +80,30 @@ app.get('/test/spotify', async (req, res) => {
   }
 });
 
+// Debug endpoint to test actual Spotify API call
+app.get('/test/spotify-search', async (req, res) => {
+  try {
+    const tokens = await cache.getSpotifyTokens();
+    if (!tokens) {
+      return res.status(401).json({ error: 'No tokens found' });
+    }
+
+    const axios = (await import('axios')).default;
+    const response = await axios.get('https://api.spotify.com/v1/search', {
+      params: { q: 'test', type: 'artist', limit: 1 },
+      headers: { 'Authorization': `Bearer ${tokens.accessToken}` }
+    });
+
+    res.json({ success: true, result: response.data });
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      spotifyError: error.response?.data,
+      status: error.response?.status
+    });
+  }
+});
+
 // Import additional services for API routes
 import VenueScraper from './scrapers/base.js';
 import SpotifyAPIService from './services/spotify-api.js';
