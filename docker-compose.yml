@@ -21,6 +21,7 @@ services:
       - gibbs-apps
     volumes:
       - ./logs:/usr/src/app/logs:rw
+      - ./data:/usr/src/app/data:rw
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
       interval: 30s

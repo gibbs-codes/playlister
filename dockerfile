@@ -1,36 +1,30 @@
 # Dockerfile
-FROM node:18-alpine
+# Base image ships Chromium + all its system deps pre-installed, needed
+# because Songkick's bot protection 406s plain HTTP clients (axios/curl)
+# on venue/artist pages - only a real browser engine gets through.
+FROM mcr.microsoft.com/playwright:v1.47.0-jammy
 
 # Set working directory
 WORKDIR /usr/src/app
 
-# Install system dependencies for native modules
-RUN apk add --no-cache \
-    bash \
-    curl \
-    && rm -rf /var/cache/apk/*
-
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (skip re-downloading browsers, already in base image)
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN npm ci --only=production && npm cache clean --force
 
 # Copy application code
 COPY . .
 
-# Create logs directory
-RUN mkdir -p logs && chmod 755 logs
+# Create logs and data directories
+RUN mkdir -p logs data && chmod 755 logs data
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S playlister && \
-    adduser -S playlister -u 1001 -G playlister
-
-# Change ownership of app directory
-RUN chown -R playlister:playlister /usr/src/app
-
-# Switch to non-root user
-USER playlister
+# Run as the base image's existing non-root user (uid 1000, already set up
+# for the Chromium sandbox) instead of a new one - it also happens to match
+# the host uid that owns the bind-mounted logs/data volumes.
+RUN chown -R pwuser:pwuser /usr/src/app
+USER pwuser
 
 # Expose port
 EXPOSE 8888

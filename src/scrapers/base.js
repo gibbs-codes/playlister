@@ -1,5 +1,5 @@
 // src/scrapers/base.js
-import axios from 'axios';
+import { chromium } from 'playwright';
 import * as cheerio from 'cheerio';
 import LLMParser from './llm-parser.js';
 
@@ -9,23 +9,27 @@ class VenueScraper {
     this.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
   }
 
+  // Songkick's bot protection 406s plain HTTP clients (axios/curl) on venue,
+  // artist, and calendar pages even with a full browser header set - only a
+  // real browser engine gets through. Fetch via headless Chromium instead.
+  async fetchHtml(url) {
+    const browser = await chromium.launch();
+    try {
+      const context = await browser.newContext({ userAgent: this.userAgent });
+      const page = await context.newPage();
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      return await page.content();
+    } finally {
+      await browser.close();
+    }
+  }
+
   async scrapeVenue(venueConfig) {
     console.log(`🎵 Scraping ${venueConfig.name}...`);
-    
+
     try {
       // Fetch the HTML
-      const response = await axios.get(venueConfig.scrapeUrl, {
-        headers: {
-          'User-Agent': this.userAgent,
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate',
-          'Connection': 'keep-alive',
-        },
-        timeout: 10000
-      });
-
-      const html = response.data;
+      const html = await this.fetchHtml(venueConfig.scrapeUrl);
       console.log(`📄 Fetched ${html.length} characters from ${venueConfig.name}`);
 
       let artists = [];
