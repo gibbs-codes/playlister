@@ -118,6 +118,10 @@ const playlistBuilder = new PlaylistBuilder();
 const scheduler = new PlaylistScheduler();
 const cleanup = new ArtistCleanupService();
 
+// Registers the weekly cron job - without this call, .start() never runs
+// and the Sunday 2am update never fires on its own.
+scheduler.start();
+
 // Test scraping only (no Spotify API calls)
 app.post('/api/test-scrape/:venueId', async (req, res) => {
   try {
