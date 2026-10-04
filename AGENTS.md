@@ -20,6 +20,9 @@ npm ci && npm start   # nodemon src/index.js
 in the repo**, it's on the box. Runtime `data/` cache is gitignored.
 Deploy: `hl deploy playlister`.
 
+## Core (container) deployment
+Runs from homelab `hosts/core/daily` (service `playlister`; tailnet `https://core.tail664798.ts.net:8888`). `PLAYLISTER_SCHEDULER=off` disables the Sunday 02:00 job (default on): **only one instance may have it on** (it rewrites Spotify playlists). Spotify tokens live in `data/cache.json` (mounted); `SPOTIFY_REDIRECT_URI` must match a redirect URI registered in the Spotify dashboard, only needed to re-authorize. Core has no mDNS: use tailnet names for `OLLAMA_URL`.
+
 ## Keeping this file current
 
 This file is the context the next agent (or you, later) loads first. When a

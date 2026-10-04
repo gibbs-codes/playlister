@@ -120,7 +120,13 @@ const cleanup = new ArtistCleanupService();
 
 // Registers the weekly cron job - without this call, .start() never runs
 // and the Sunday 2am update never fires on its own.
-scheduler.start();
+// PLAYLISTER_SCHEDULER=off keeps the weekly job from registering (candidate/standby instances must
+// never run it alongside the live one: it writes Spotify playlists). Default: on.
+if ((process.env.PLAYLISTER_SCHEDULER || 'on').toLowerCase() === 'off') {
+  console.log('⏸️  Scheduler disabled (PLAYLISTER_SCHEDULER=off)');
+} else {
+  scheduler.start();
+}
 
 // Test scraping only (no Spotify API calls)
 app.post('/api/test-scrape/:venueId', async (req, res) => {
